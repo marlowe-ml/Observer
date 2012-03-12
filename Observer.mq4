@@ -70,8 +70,12 @@ int init()
          MA_1_Values[i] = MA_1(i);
          MA_2_Values[i] = MA_2(i);
       }
+      initHistory();
+            
       FirstTimeInitialized = true;
    }
+   
+  
    return(0);
   }
 //+------------------------------------------------------------------+
@@ -94,7 +98,7 @@ int start()
       return(0);
    }
    
-   initHistory();
+   initLabels();
 
 
    IsNewBar = isNewBar();
@@ -115,6 +119,8 @@ int start()
    return(0);
   }
 //+------------------------------------------------------------------+
+
+
 
 void analyze() {
    bool isLong = true;
@@ -153,7 +159,9 @@ void analyze() {
 
       double stochScore = stochasticScore();
 
-      if (MathAbs(stochScore) > 0.6) {
+      ObjectSetText("SG_STOCH_CROSS","ST CR: " + stochScore);
+
+      if (MathAbs(stochScore) > 0.4) {
          int greenValue = 0x0;
          int redValue = 0x0;
          int blueValue = 0x0;
@@ -184,11 +192,14 @@ void analyze() {
 
 double stochasticScore() {
 
+   // todo: anticipate crossing, current signal is too late
+   // allow to pass time frame for signal to get the other timeframe's crossing expectation
+
    int crossingBarsBack = 1;
    double lastCrossingDirection = 0;
 
    // find previous crossing
-   for (crossingBarsBack=1; crossingBarsBack<5; crossingBarsBack++) {
+   while (crossingBarsBack < 30) {
       double prevK1 = Stochastic_1(MODE_MAIN,crossingBarsBack);
       double prevD1 = Stochastic_1(MODE_SIGNAL,crossingBarsBack);
 
@@ -199,22 +210,24 @@ double stochasticScore() {
       double deltaPrev2 = prevK2 - prevD2;
 
       if (deltaPrev1 > 0 && deltaPrev2 < 0) {
-         lastCrossingDirection = 1 - (crossingBarsBack * 0.1); // crossing up
+         lastCrossingDirection = 1 - (crossingBarsBack * 0.2); // crossing up
          break;
       } else if (deltaPrev1 < 0 && deltaPrev2 > 0) {
-         lastCrossingDirection = -1 + (crossingBarsBack * 0.1); // crossing down
+         lastCrossingDirection = -1 + (crossingBarsBack * 0.2); // crossing down
          break;
-      }      
+      }
+      
+      crossingBarsBack++;
    }
    
    double K = Stochastic_1(MODE_MAIN,0);
    double D = Stochastic_1(MODE_SIGNAL,0);
    double curDelta = MathAbs(K-D);
    
-   if (curDelta > 10)
-      curDelta = 10;
+   if (curDelta > 20)
+      curDelta = 20;
    
-   return(lastCrossingDirection * (curDelta / 10));
+   return(lastCrossingDirection * (curDelta / 20));
    
    
    /*
@@ -234,7 +247,6 @@ double stochasticScore() {
    else if (deltaPrev1 < 0 && deltaPrev2 > 0)
       return(-1);
    */
-   return(0);   
 
    //&& Open[1] > Open[0]  -- todo: catch divergence!
    /*
@@ -354,6 +366,8 @@ int checkMACrossing() {
 }
 
 
+
+
 void maintainTrade() {
 }
 
@@ -417,6 +431,21 @@ void initHistory() {
    }
 }
 
+
+
+void initLabels() {
+   string gfxNameStoch = "SG_STOCH_CROSS";
+
+   if (ObjectGet(gfxNameStoch, OBJPROP_CORNER) != 1)
+   {
+      ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
+      ObjectSet(gfxNameStoch,OBJPROP_COLOR,Black);
+      ObjectSetText(gfxNameStoch,"ST CR: " + 0);
+      ObjectSet(gfxNameStoch, OBJPROP_CORNER, 1);
+      ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 30);
+      ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 0);
+   }
+}
 
 
 
