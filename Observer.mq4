@@ -157,7 +157,7 @@ void analyze() {
       
       //,":",Stochastic_1(MODE_MAIN));
 
-      double stochScore = stochasticScore();
+      double stochScore = stochasticCrossProbability();//stochasticScore();
 
       ObjectSetText("SG_STOCH_CROSS","ST CR: " + stochScore);
 
@@ -183,42 +183,91 @@ void analyze() {
          //ObjectSetText(gfxNameStoch,"S");
          GFX_ID = GFX_ID + 1;                    
       }
-      
-      
 
    }
       
 }
+
+
+double stochasticCrossProbability() {
+   double probability = 0;
+   
+   double deltas[3];
+   
+   for (int i=1; i<3; i++) {
+      double prevK1 = Stochastic_1(MODE_MAIN,i);
+      double prevD1 = Stochastic_1(MODE_SIGNAL,i);
+      deltas[i-1] = prevK1 - prevD1;   
+   }
+
+   if ((deltas[1] > 0 && deltas[0] > 0 ) || (deltas[1] < 0 && deltas[0] < 0)) {   
+      if (MathAbs(deltas[1]) > MathAbs(deltas[0])) {
+         double diff = MathAbs(deltas[1])-MathAbs(deltas[0]);
+         if (diff > 10)
+            diff = 10;
+         probability += 0.75 * (diff/10.0);
+      }
+      if ((deltas[2] > 0 && deltas[1] > 0 ) || (deltas[2] < 0 && deltas[1] < 0)) {   
+         if (MathAbs(deltas[2]) > MathAbs(deltas[1])) {
+            diff = MathAbs(deltas[2])-MathAbs(deltas[1]);
+            if (diff > 10)
+               diff = 10;
+            
+            probability += 0.25 * (diff/10.0);
+         }
+      }
+   }
+
+   if (Stochastic_1(MODE_MAIN,0) < Stochastic_1(MODE_SIGNAL,0)) {
+      probability *= -1;
+   }
+   
+   
+   return(probability);
+
+}
+
+
 
 double stochasticScore() {
 
    // todo: anticipate crossing, current signal is too late
    // allow to pass time frame for signal to get the other timeframe's crossing expectation
 
-   int crossingBarsBack = 1;
+   int crossingBarsBack = 0;
    double lastCrossingDirection = 0;
 
-   // find previous crossing
-   while (crossingBarsBack < 30) {
-      double prevK1 = Stochastic_1(MODE_MAIN,crossingBarsBack);
-      double prevD1 = Stochastic_1(MODE_SIGNAL,crossingBarsBack);
+   int barCount = 1;
 
-      double prevK2 = Stochastic_1(MODE_MAIN,crossingBarsBack+1);
-      double prevD2 = Stochastic_1(MODE_SIGNAL,crossingBarsBack+1);
+   // find previous crossing
+   while (barCount < 4 || crossingBarsBack == 0) {
+      double prevK1 = Stochastic_1(MODE_MAIN,barCount);
+      double prevD1 = Stochastic_1(MODE_SIGNAL,barCount);
+
+      double prevK2 = Stochastic_1(MODE_MAIN,barCount+1);
+      double prevD2 = Stochastic_1(MODE_SIGNAL,barCount+1);
 
       double deltaPrev1 = prevK1 - prevD1;
       double deltaPrev2 = prevK2 - prevD2;
 
       if (deltaPrev1 > 0 && deltaPrev2 < 0) {
-         lastCrossingDirection = 1 - (crossingBarsBack * 0.2); // crossing up
-         break;
+         crossingBarsBack = barCount;
+         lastCrossingDirection = 1 - (barCount * 0.1); // crossing up
+         if (lastCrossingDirection < 0)
+            lastCrossingDirection = 0.1;
       } else if (deltaPrev1 < 0 && deltaPrev2 > 0) {
-         lastCrossingDirection = -1 + (crossingBarsBack * 0.2); // crossing down
-         break;
+         crossingBarsBack = barCount;
+         lastCrossingDirection = -1 + (barCount * 0.1); // crossing down
+         if (lastCrossingDirection > 0)
+            lastCrossingDirection = -0.1;
+         
       }
       
-      crossingBarsBack++;
+      barCount++;
    }
+      
+   
+   //if (crossingBarsBack)
    
    double K = Stochastic_1(MODE_MAIN,0);
    double D = Stochastic_1(MODE_SIGNAL,0);
