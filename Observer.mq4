@@ -21,7 +21,7 @@
 double BullScore = -100;
 double BearScore = -100;
 
-int FixedTimeFrame = PERIOD_M30;
+int FixedTimeFrame = 0; //PERIOD_M30;
 int DebugDecimals = 6;
 int MinimumBars = 100;
 double MinimumBBWidth = 0.0030;
@@ -38,6 +38,7 @@ double BB_1_Upper[100];
 double BB_1_Width[100];
 double STOCH_1_K[100];
 double STOCH_1_D[100];
+double STOCH_1_DELTA[100];
 
 int MA_1_Period = 14;
 int MA_1_Mode = MODE_SMA;
@@ -48,9 +49,11 @@ int BB_1_Period = 20;
 int BB_1_Deviations = 2;
 int BB_1_Shift = 0;
 
-
+int AllPeriods[10] = {PERIOD_M1,PERIOD_M5,PERIOD_M15,PERIOD_M30,PERIOD_H1,PERIOD_H4,PERIOD_D1,PERIOD_W1,PERIOD_MN1};
+datetime CurrentBarTimes[10] = {0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 int GFX_ID = 1;
+
 
 bool IsNewBar = false;
 
@@ -66,6 +69,7 @@ double Spread = 0;
 int init()
   {
    if (!FirstTimeInitialized) {
+   
       for (int i=0; i<MinimumBars; i++) {
          MA_1_Values[i] = MA_1(i);
          MA_2_Values[i] = MA_2(i);
@@ -123,24 +127,34 @@ int start()
 
 
 void analyze() {
-   bool isLong = true;
-   double relevantPrice = 0;
 
-   if (isLong)
-      relevantPrice = Bid;
-   else
-      relevantPrice = Ask;
-
-   double ma1 = MA_1_Values[0];
-   double ma2 = MA_2_Values[0];   
+      int lowerTF = relTimeFrame(-1);
+      int higherTF = relTimeFrame(+1);
       
-   double ma1Distance = relevantPrice - ma1;
-   double ma2Distance = relevantPrice - ma2;
+      if (isNewBar(higherTF)) {
+         datetime barTime = iTime(NULL, higherTF, 0);
+         drawVLine(barTime, Red);
+      }
+      
+      if (isNewBar(lowerTF)) {
+         barTime = iTime(NULL, lowerTF, 0);
+         drawVLine(barTime, Red);
+      }
+      
+      
+      /*
+      stochBarsBack = stochCrossingInfo(lowerTF);
+      if (stochBarsBack == 1) {
+         //datetime t = iTime()
+         //drawVLine()
+      }
+      
+      stochBarsBack = stochCrossingInfo(relTimeFrame(1));
+      //if (stochBarsBack == 1)
+      */
    
 
-   //Alert("bb1 main: ",DoubleToStr(bb1_main, DebugDecimals));
-
-   double maInterDistance = ma1-ma2;
+   
 
    if (IsNewBar) {
       int bbProx = checkBollingerBandsProximity();
@@ -156,7 +170,15 @@ void analyze() {
       
       
       //,":",Stochastic_1(MODE_MAIN));
+      
+      int stochBarsBack = stochCrossingInfo();
+      if (stochBarsBack == 1) {
+         drawVLine(Time[stochBarsBack], Purple);
+      }
+         
+         
 
+      /*
       double stochScore = stochasticCrossProbability();//stochasticScore();
 
       ObjectSetText("SG_STOCH_CROSS","ST CR: " + stochScore);
@@ -182,11 +204,11 @@ void analyze() {
          ObjectSet(gfxNameStoch,OBJPROP_COLOR,stLineColor);
          //ObjectSetText(gfxNameStoch,"S");
          GFX_ID = GFX_ID + 1;                    
-      }
+      }*/
 
-   }
-      
+   }     
 }
+
 
 
 double stochasticCrossProbability() {
@@ -226,6 +248,38 @@ double stochasticCrossProbability() {
    return(probability);
 
 }
+
+int stochCrossingInfo(int timeFrame=0) {
+    // delta sign change
+    
+    int prevTF = FixedTimeFrame;
+    FixedTimeFrame = timeFrame;
+    
+    int barCount = 0;
+    
+    while (barCount < 50) {
+      barCount++;
+      double prevK1 = Stochastic_1(MODE_MAIN,barCount);
+      double prevD1 = Stochastic_1(MODE_SIGNAL,barCount);
+
+      double prevK2 = Stochastic_1(MODE_MAIN,barCount+1);
+      double prevD2 = Stochastic_1(MODE_SIGNAL,barCount+1);
+      
+      double deltaPrev1 = prevK1 - prevD1;
+      double deltaPrev2 = prevK2 - prevD2;      
+      
+      if ((deltaPrev1 > 0 && deltaPrev2 < 0) || (deltaPrev1 < 0 && deltaPrev2 > 0)) {
+         break;
+      }
+            
+    }
+    
+    FixedTimeFrame = prevTF;
+    
+    return(barCount);
+   
+}
+
 
 
 
@@ -313,6 +367,7 @@ double stochasticScore() {
    */
 
 }
+
 
 int checkBollingerBandsProximity() {
 
@@ -449,6 +504,7 @@ void onNewBar() {
       BB_1_Width[MinimumBars-i] = BB_1_Width[MinimumBars-i-1];
       STOCH_1_K[MinimumBars-i] = STOCH_1_K[MinimumBars-i-1];
       STOCH_1_D[MinimumBars-i] = STOCH_1_D[MinimumBars-i-1];
+      STOCH_1_DELTA[MinimumBars-i] = STOCH_1_DELTA[MinimumBars-i-1];
    }
    MA_1_Values[0] = MA_1(0);
    MA_2_Values[0] = MA_2(0);
@@ -476,7 +532,7 @@ void initHistory() {
    
       STOCH_1_K[i] = Stochastic_1(MODE_MAIN,i);
       STOCH_1_D[i] = Stochastic_1(MODE_SIGNAL,i);
-   
+      STOCH_1_DELTA[i] = STOCH_1_K[i]-STOCH_1_D[i];
    }
 }
 
@@ -498,6 +554,20 @@ void initLabels() {
 
 
 
+bool isNewBar(int timeFrame=0) {
+   int tfIndex = indexOfTimeFrame(timeFrame);
+   
+   datetime newTime = iTime(NULL, timeFrame, 0);
+   
+   if (CurrentBarTimes[tfIndex] != newTime) {
+      CurrentBarTimes[tfIndex] = newTime;
+      return(true);
+   }
+   
+   return(false);
+}
+
+/*
 bool isNewBar() {
    static datetime currentBarTime = 0;
    if (currentBarTime != Time[0]){
@@ -505,6 +575,55 @@ bool isNewBar() {
       return(true);
    }
    return(false);
+}*/
+
+
+int indexOfTimeFrame(int timeFrame) {
+   int index = -1;
+   int curPeriod = -1;
    
+   while (curPeriod < timeFrame && index < ArraySize(AllPeriods)) {
+      index++;
+      curPeriod = AllPeriods[index];
+   }
+   return(index);
+}
+
+int relTimeFrame(int diff, int referencePeriod=0) {
+   if (referencePeriod == 0)
+      referencePeriod = Period();
+   
+   /*
+   int index = -1;
+   int curPeriod = -1;
+   while (curPeriod < referencePeriod && index < ArraySize(AllPeriods)) {
+      index++;
+      curPeriod = AllPeriods[index];
+   }*/
+   
+   int index = indexOfTimeFrame(referencePeriod);
+   
+   
+   index = index + diff;
+   if (index < 0)
+      index = 0;
+   
+   if (index > ArraySize(AllPeriods)-1)
+      index = ArraySize(AllPeriods)-1;
+      
+   return(AllPeriods[index]);
+
    
 }
+
+void drawVLine(datetime t, color col) {
+   string gfxName = nextGfxId();
+   ObjectCreate(gfxName,OBJ_VLINE,0,t,0);
+   ObjectSet(gfxName,OBJPROP_COLOR,col);
+}
+
+string nextGfxId() {
+   GFX_ID++;
+   return("gfx_" + GFX_ID);
+}
+
