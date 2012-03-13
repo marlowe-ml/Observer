@@ -125,36 +125,50 @@ int start()
 //+------------------------------------------------------------------+
 
 
+void checkDrawStochInfo(int timeframe) {
+      if (isNewBar(timeframe)) {
+         int stochInfo[2] = {0,0};
+         datetime barTime = iTime(NULL, timeframe, 0);
+         stochCrossingInfo(timeframe, stochInfo);
+         if (stochInfo[0] == 1) {
+            string gfx = nextGfxId();
+            color col = Red;
+            //int symbol = SYMBOL_ARROWDOWN;
+            double yPos = BollingerBand_1(MODE_UPPER, 0) - 0.0010 * indexOfTimeFrame(timeframe);
+            string label = indexOfTimeFrame(timeframe);
+            
+            if (stochInfo[1] > 0) {
+               //symbol = SYMBOL_ARROWUP;
+               label = label+"+";
+               col = Green;
+            } else {
+               label = label + "-"; 
+            }
+            
+            ObjectCreate(gfx, OBJ_TEXT, 0, barTime, yPos);
+            //ObjectSet(gfx, OBJPROP_ARROWCODE, symbol);
+            ObjectSetText(gfx, label);
+            ObjectSet(gfx, OBJPROP_COLOR, col);
+         }         
+      }
+}
 
 void analyze() {
 
       int lowerTF = relTimeFrame(-1);
       int higherTF = relTimeFrame(+1);
+
+      checkDrawStochInfo(higherTF);
+      checkDrawStochInfo(lowerTF);
+      checkDrawStochInfo(Period());
       
-      if (isNewBar(higherTF)) {
-         datetime barTime = iTime(NULL, higherTF, 0);
-         drawVLine(barTime, Red);
-      }
       
+         /*
       if (isNewBar(lowerTF)) {
          barTime = iTime(NULL, lowerTF, 0);
-         drawVLine(barTime, Red);
-      }
-      
-      
-      /*
-      stochBarsBack = stochCrossingInfo(lowerTF);
-      if (stochBarsBack == 1) {
-         //datetime t = iTime()
-         //drawVLine()
-      }
-      
-      stochBarsBack = stochCrossingInfo(relTimeFrame(1));
-      //if (stochBarsBack == 1)
-      */
-   
+      }*/
 
-   
+
 
    if (IsNewBar) {
       int bbProx = checkBollingerBandsProximity();
@@ -170,11 +184,12 @@ void analyze() {
       
       
       //,":",Stochastic_1(MODE_MAIN));
-      
+
+      /*            
       int stochBarsBack = stochCrossingInfo();
       if (stochBarsBack == 1) {
          drawVLine(Time[stochBarsBack], Purple);
-      }
+      }*/
          
          
 
@@ -249,8 +264,11 @@ double stochasticCrossProbability() {
 
 }
 
-int stochCrossingInfo(int timeFrame=0) {
+void stochCrossingInfo(int timeFrame, int &info[]) {
     // delta sign change
+    
+    info[0] = 0;
+    info[1] = 1;
     
     int prevTF = FixedTimeFrame;
     FixedTimeFrame = timeFrame;
@@ -268,16 +286,25 @@ int stochCrossingInfo(int timeFrame=0) {
       double deltaPrev1 = prevK1 - prevD1;
       double deltaPrev2 = prevK2 - prevD2;      
       
-      if ((deltaPrev1 > 0 && deltaPrev2 < 0) || (deltaPrev1 < 0 && deltaPrev2 > 0)) {
+      if (deltaPrev1 > 0 && deltaPrev2 < 0) {
+         // crossing up
+         if (Stochastic_1(MODE_MAIN,barCount) < 30) {
+            info[0] = barCount;
+            info[1] = 1;
+         }
+         break;
+      } else if (deltaPrev1 < 0 && deltaPrev2 > 0) {
+         // crossing down
+         if (Stochastic_1(MODE_MAIN,barCount) > 70) {
+            info[0] = barCount;
+            info[1] = -1;      
+         }
          break;
       }
             
     }
     
-    FixedTimeFrame = prevTF;
-    
-    return(barCount);
-   
+    FixedTimeFrame = prevTF;   
 }
 
 
