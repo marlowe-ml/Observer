@@ -127,15 +127,30 @@ int start()
 
 void checkDrawStochInfo(int timeframe) {
       if (isNewBar(timeframe)) {
-         int stochInfo[2] = {0,0};
+         double stochInfo[3] = {0,0};
          datetime barTime = iTime(NULL, timeframe, 0);
          stochCrossingInfo(timeframe, stochInfo);
+         
+         int tfIndex = indexOfTimeFrame(timeframe);
+         
          if (stochInfo[0] == 1) {
+            // -- label         
+            int labelIndex = 1;
+            /*
+            if (timeframe < Period()) {
+               labelIndex = 0
+            } else if (timeframe > Period()) {
+               labelIndex = 2
+            }*/
+         
+            updateLabel("SG_STOCH_CROSS_" + labelIndex, stochInfo[0]);
+            // -- label
+         
             string gfx = nextGfxId();
             color col = Red;
             //int symbol = SYMBOL_ARROWDOWN;
-            double yPos = BollingerBand_1(MODE_UPPER, 0) - 0.0010 * indexOfTimeFrame(timeframe);
-            string label = indexOfTimeFrame(timeframe);
+            double yPos = BollingerBand_1(MODE_UPPER, 0) - 0.0010 * tfIndex;
+            string label = tfIndex;
             
             if (stochInfo[1] > 0) {
                //symbol = SYMBOL_ARROWUP;
@@ -149,7 +164,7 @@ void checkDrawStochInfo(int timeframe) {
             //ObjectSet(gfx, OBJPROP_ARROWCODE, symbol);
             ObjectSetText(gfx, label);
             ObjectSet(gfx, OBJPROP_COLOR, col);
-         }         
+         }
       }
 }
 
@@ -264,11 +279,12 @@ double stochasticCrossProbability() {
 
 }
 
-void stochCrossingInfo(int timeFrame, int &info[]) {
+void stochCrossingInfo(int timeFrame, double &info[]) {
     // delta sign change
     
     info[0] = 0;
-    info[1] = 1;
+    info[1] = 0;
+    info[2] = 0;
     
     int prevTF = FixedTimeFrame;
     FixedTimeFrame = timeFrame;
@@ -566,17 +582,26 @@ void initHistory() {
 
 
 void initLabels() {
-   string gfxNameStoch = "SG_STOCH_CROSS";
+   
+   for (int i=0; i<3; i++) {
+   
+      string gfxNameStoch = "SG_STOCH_CROSS_" + i;
+      if (ObjectGet(gfxNameStoch, OBJPROP_CORNER) != 1)
+      {
+         ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
+         ObjectSet(gfxNameStoch,OBJPROP_COLOR,Black);
+         ObjectSetText(gfxNameStoch,"ST" + i + ":" + 0);
+         ObjectSet(gfxNameStoch, OBJPROP_CORNER, 1);
+         ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 70);
+         ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 20 * i);
+      }
+   }  
+}
 
-   if (ObjectGet(gfxNameStoch, OBJPROP_CORNER) != 1)
-   {
-      ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
-      ObjectSet(gfxNameStoch,OBJPROP_COLOR,Black);
-      ObjectSetText(gfxNameStoch,"ST CR: " + 0);
-      ObjectSet(gfxNameStoch, OBJPROP_CORNER, 1);
-      ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 30);
-      ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 0);
-   }
+void updateLabel(string labelName, string text, color col = CLR_NONE) {
+   ObjectSetText(labelName, text);
+   if (col != CLR_NONE)
+      ObjectSet(labelName, OBJPROP_COLOR, col);     
 }
 
 
