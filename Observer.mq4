@@ -150,24 +150,36 @@ void checkDrawStochInfo(int timeframe) {
             double stochSlope = (stochInfo[4] - stochInfo[2]) / stochInfo[0]; // ascending / descending slope
             double priceSlope = priceDiff / stochInfo[0];
 
+            color col = Red;
 
-
-            updateLabel("SG_STOCH_CROSS_" + labelIndex, "ST" + labelIndex + " : " 
-            + "bars: " + barsBack + " : " 
-            + " crss: " + strInt(stochInfo[1])
-            + " val: " + str2(stochInfo[2])
-            + " diff: " + str2(diff)
-            + " pdiff: " + str5(priceDiff)
-            + " slope: " + str5(stochSlope)
-            + " pslope: " + str5(priceSlope)
-            );
+            updateLabel(stochGfx(labelIndex, 0), "ST" + labelIndex);
+            updateLabel(stochGfx(labelIndex, 1), "bars: " + barsBack);
+            
+            if (stochInfo[1] > 0)
+               col = Green;               
+            updateLabel(stochGfx(labelIndex, 2), " cross: " + strInt(stochInfo[1]), col);
+            
+            if (stochInfo[2] > 0) col = Green; else col = Red;
+               updateLabel(stochGfx(labelIndex, 3), " val: " + str2(stochInfo[2]), col);
+            
+            if (diff > 0) col = Green; else col = Red;
+               updateLabel(stochGfx(labelIndex, 4), " diff: " + str2(diff), col);
+            
+            if (priceDiff > 0) col = Green; else col = Red;            
+               updateLabel(stochGfx(labelIndex, 5), " pdiff: " + str5(priceDiff), col);
+            
+            if (stochSlope > 0) col = Green; else col = Red;            
+               updateLabel(stochGfx(labelIndex, 6), " slope: " + str5(stochSlope), col);
+            
+            if (priceSlope > 0) col = Green; else col = Red;
+               updateLabel(stochGfx(labelIndex, 7), " pslope: " + str5(priceSlope), col);
             // -- label
 
 
          if (stochInfo[0] == 1) {
          
             string gfx = nextGfxId();
-            color col = Red;
+            col = Red;
             //int symbol = SYMBOL_ARROWDOWN;
             double yPos = BollingerBand_1(MODE_UPPER, 0) - 0.0010 * tfIndex;
             string label = tfIndex;
@@ -609,19 +621,28 @@ void initHistory() {
 
 
 
+string stochGfx(int i, int j) {
+   return("SG_STOCH_CROSS_" + i + "_" + j);
+}
+
 void initLabels() {
    
    for (int i=0; i<3; i++) {
-   
-      string gfxNameStoch = "SG_STOCH_CROSS_" + i;
-      if (ObjectGet(gfxNameStoch, OBJPROP_COLOR) != Red)
-      {
-         ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
-         ObjectSet(gfxNameStoch,OBJPROP_COLOR,Red);
-         ObjectSetText(gfxNameStoch,"ST" + i + ":" + 0);
-         //ObjectSet(gfxNameStoch, OBJPROP_CORNER, 4);
-         ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 0);
-         ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 20 * (i+1));
+      for (int j=0; j<8; j++) {   
+         int xDist = j * 80;
+         int yDist = 15 * (i+1);
+         
+         string gfxNameStoch = stochGfx(i,j);
+         if (ObjectGet(gfxNameStoch, OBJPROP_XDISTANCE) != xDist)
+         {
+            ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
+            ObjectSet(gfxNameStoch,OBJPROP_COLOR,Red);
+            ObjectSetText(gfxNameStoch,"-" + i + "_" + j, 8, "Arial");
+            //ObjectSet(gfxNameStoch, OBJPROP_CORNER, 4);
+            ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, xDist);
+            ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, yDist);
+         }
+      
       }
    }  
 }
