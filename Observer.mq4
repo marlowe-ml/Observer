@@ -586,14 +586,14 @@ void initLabels() {
    for (int i=0; i<3; i++) {
    
       string gfxNameStoch = "SG_STOCH_CROSS_" + i;
-      if (ObjectGet(gfxNameStoch, OBJPROP_CORNER) != 1)
+      if (ObjectGet(gfxNameStoch, OBJPROP_COLOR) != Red)
       {
          ObjectCreate(gfxNameStoch,OBJ_LABEL,0,0,0);
-         ObjectSet(gfxNameStoch,OBJPROP_COLOR,Black);
+         ObjectSet(gfxNameStoch,OBJPROP_COLOR,Red);
          ObjectSetText(gfxNameStoch,"ST" + i + ":" + 0);
-         ObjectSet(gfxNameStoch, OBJPROP_CORNER, 1);
-         ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 70);
-         ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 20 * i);
+         //ObjectSet(gfxNameStoch, OBJPROP_CORNER, 4);
+         ObjectSet(gfxNameStoch, OBJPROP_XDISTANCE, 0);
+         ObjectSet(gfxNameStoch, OBJPROP_YDISTANCE, 20 * (i+1));
       }
    }  
 }
