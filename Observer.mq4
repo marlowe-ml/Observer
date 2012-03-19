@@ -125,26 +125,46 @@ int start()
 //+------------------------------------------------------------------+
 
 
+
 void checkDrawStochInfo(int timeframe) {
       if (isNewBar(timeframe)) {
-         double stochInfo[3] = {0,0};
+         double stochInfo[6] = {0,0,0,0,0,0};
          datetime barTime = iTime(NULL, timeframe, 0);
          stochCrossingInfo(timeframe, stochInfo);
          
          int tfIndex = indexOfTimeFrame(timeframe);
          
-         if (stochInfo[0] == 1) {
+
             // -- label         
-            int labelIndex = 1;
-            /*
-            if (timeframe < Period()) {
-               labelIndex = 0
-            } else if (timeframe > Period()) {
-               labelIndex = 2
-            }*/
-         
-            updateLabel("SG_STOCH_CROSS_" + labelIndex, stochInfo[0]);
+            int labelIndex = indexDiffTimeFrame(timeframe);
+            if (labelIndex < 0)
+               labelIndex = 0;
+            else if (labelIndex > 0)
+               labelIndex = 2;
+            else
+               labelIndex = 1;
+               
+            double diff = stochInfo[4]-stochInfo[2];
+            int barsBack = stochInfo[0];
+            double priceDiff = iOpen(NULL, timeframe, 0) - iClose(NULL, timeframe, barsBack);
+            double stochSlope = (stochInfo[4] - stochInfo[2]) / stochInfo[0]; // ascending / descending slope
+            double priceSlope = priceDiff / stochInfo[0];
+
+
+
+            updateLabel("SG_STOCH_CROSS_" + labelIndex, "ST" + labelIndex + " : " 
+            + "bars: " + barsBack + " : " 
+            + " crss: " + strInt(stochInfo[1])
+            + " val: " + str2(stochInfo[2])
+            + " diff: " + str2(diff)
+            + " pdiff: " + str5(priceDiff)
+            + " slope: " + str5(stochSlope)
+            + " pslope: " + str5(priceSlope)
+            );
             // -- label
+
+
+         if (stochInfo[0] == 1) {
          
             string gfx = nextGfxId();
             color col = Red;
@@ -168,14 +188,65 @@ void checkDrawStochInfo(int timeframe) {
       }
 }
 
+void stochCrossingInfo(int timeFrame, double &info[]) {
+    // delta sign change
+    
+    info[0] = 0;
+    info[1] = 0;
+    info[2] = 0;
+    info[3] = 0;
+    info[4] = 0;
+    info[5] = 0;
+    
+    int prevTF = FixedTimeFrame;
+    FixedTimeFrame = timeFrame;
+    
+    int barCount = 0;
+    
+    while (barCount < 50) {
+      barCount++;
+      double prevK1 = Stochastic_1(MODE_MAIN,barCount);
+      double prevD1 = Stochastic_1(MODE_SIGNAL,barCount);
+
+      double prevK2 = Stochastic_1(MODE_MAIN,barCount+1);
+      double prevD2 = Stochastic_1(MODE_SIGNAL,barCount+1);
+      
+      double deltaPrev1 = prevK1 - prevD1;
+      double deltaPrev2 = prevK2 - prevD2;      
+      
+      bool isCrossingUp = deltaPrev1 > 0 && deltaPrev2 < 0;
+      bool isCrossingDown = deltaPrev1 < 0 && deltaPrev2 > 0;
+
+      if (isCrossingUp || isCrossingDown) {
+         info[0] = barCount;
+         info[1] = 1;
+         info[2] = Stochastic_1(MODE_MAIN,barCount);
+         info[3] = Stochastic_1(MODE_SIGNAL,barCount);
+         info[4] = Stochastic_1(MODE_MAIN,0);
+         info[5] = Stochastic_1(MODE_SIGNAL,0);            
+                     
+         if (isCrossingUp) {
+            info[1] = 1;
+         } else if (isCrossingDown) {
+            info[1] = -1;      
+         }
+         
+         break;                  
+      }
+    }
+    
+    FixedTimeFrame = prevTF;   
+}
+
+
 void analyze() {
 
       int lowerTF = relTimeFrame(-1);
       int higherTF = relTimeFrame(+1);
 
-      checkDrawStochInfo(higherTF);
       checkDrawStochInfo(lowerTF);
       checkDrawStochInfo(Period());
+      checkDrawStochInfo(higherTF);
       
       
          /*
@@ -279,49 +350,6 @@ double stochasticCrossProbability() {
 
 }
 
-void stochCrossingInfo(int timeFrame, double &info[]) {
-    // delta sign change
-    
-    info[0] = 0;
-    info[1] = 0;
-    info[2] = 0;
-    
-    int prevTF = FixedTimeFrame;
-    FixedTimeFrame = timeFrame;
-    
-    int barCount = 0;
-    
-    while (barCount < 50) {
-      barCount++;
-      double prevK1 = Stochastic_1(MODE_MAIN,barCount);
-      double prevD1 = Stochastic_1(MODE_SIGNAL,barCount);
-
-      double prevK2 = Stochastic_1(MODE_MAIN,barCount+1);
-      double prevD2 = Stochastic_1(MODE_SIGNAL,barCount+1);
-      
-      double deltaPrev1 = prevK1 - prevD1;
-      double deltaPrev2 = prevK2 - prevD2;      
-      
-      if (deltaPrev1 > 0 && deltaPrev2 < 0) {
-         // crossing up
-         if (Stochastic_1(MODE_MAIN,barCount) < 30) {
-            info[0] = barCount;
-            info[1] = 1;
-         }
-         break;
-      } else if (deltaPrev1 < 0 && deltaPrev2 > 0) {
-         // crossing down
-         if (Stochastic_1(MODE_MAIN,barCount) > 70) {
-            info[0] = barCount;
-            info[1] = -1;      
-         }
-         break;
-      }
-            
-    }
-    
-    FixedTimeFrame = prevTF;   
-}
 
 
 
@@ -629,6 +657,17 @@ bool isNewBar() {
    return(false);
 }*/
 
+int indexDiffTimeFrame(int timeframe, int referenceTimeframe=0) {
+   if (referenceTimeframe == 0)
+      referenceTimeframe  = Period();
+      
+   int refIndex = indexOfTimeFrame(referenceTimeframe);
+   int tfIndex = indexOfTimeFrame(timeframe);
+   
+   return(refIndex-tfIndex);
+   
+}
+
 
 int indexOfTimeFrame(int timeFrame) {
    int index = -1;
@@ -678,4 +717,29 @@ string nextGfxId() {
    GFX_ID++;
    return("gfx_" + GFX_ID);
 }
+
+string str6(double val) {
+   return(DoubleToStr(val, 6));
+}
+string str5(double val) {
+   return(DoubleToStr(val, 5));
+}
+string str4(double val) {
+   return(DoubleToStr(val, 4));
+}
+string str3(double val) {
+   return(DoubleToStr(val, 3));
+}
+string str2(double val) {
+   return(DoubleToStr(val, 2));
+}
+string str1(double val) {
+   return(DoubleToStr(val, 1));
+}
+
+string strInt(double val) {
+   int v = val;
+   return(v);
+}
+
 
