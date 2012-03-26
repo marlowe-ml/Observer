@@ -154,12 +154,20 @@ void checkDrawStochInfo(int timeframe) {
             double scoreStoch = ((stochInfo[4] - stochInfo[2]) / 100.0);
             double scorePrice = (priceDiff / (BollingerBand_1(MODE_UPPER, barsBack) - BollingerBand_1(MODE_MAIN, barsBack)));
 
-            //double correlation = scorePrice - scoreVal;
+            //double correlation = scorePrice - scoreVal;            
 
-            double angleStoch = MathArctan((stochInfo[4] - stochInfo[2]) / stochInfo[1]);
-            double anglePrice = MathArctan(priceDiff / stochInfo[1]);
-
-            
+            double divergence = 0;
+            double correlation = 0;
+   
+            if (scorePrice * scoreStoch < 0) {
+               divergence = MathAbs(scoreStoch - scorePrice);
+               if (scorePrice < 0)
+                     divergence *= -1;
+            } else {
+               if (scorePrice > 0 && MathAbs(scorePrice) > MathAbs(scoreStoch)) {               
+                  correlation = scorePrice - scoreStoch;
+               }
+            }
             
             color col = Red;
 
@@ -178,20 +186,70 @@ void checkDrawStochInfo(int timeframe) {
             if (priceDiff > 0) col = Green; else col = Red;            
                updateLabel(stochGfx(labelIndex, 5), " pdiff: " + str5(priceDiff), col);
             
-            if (stochSlope > 0) col = Green; else col = Red;            
-               updateLabel(stochGfx(labelIndex, 6), " slope: " + str5(stochSlope), col);
-            
-            if (priceSlope > 0) col = Green; else col = Red;
-               updateLabel(stochGfx(labelIndex, 7), " pslope: " + str5(priceSlope), col);
-
             if (scoreStoch > 0) col = Green; else col = Red;
-               updateLabel(stochGfx(labelIndex, 8), " sc st: " + str5(scoreStoch), col);
+               updateLabel(stochGfx(labelIndex, 6), " sc st: " + str5(scoreStoch), col);
 
             if (scorePrice > 0) col = Green; else col = Red;
-               updateLabel(stochGfx(labelIndex, 9), " sc pr: " + str5(scorePrice), col);
+               updateLabel(stochGfx(labelIndex, 7), " sc pr: " + str5(scorePrice), col);
 
+            if (divergence > 0) col = Green; else if (divergence < 0) col = Red; else col = Gray;
+               updateLabel(stochGfx(labelIndex, 8), " div: " + str5(divergence), col);
+
+            if (correlation > 0) col = Green; else if (correlation < 0) col = Red; else col = Gray;
+               updateLabel(stochGfx(labelIndex, 9), " cor: " + str5(correlation), col);
 
             // -- label
+            double bb1_upper = BollingerBand_1(MODE_UPPER, 0);
+            double bb1_lower = BollingerBand_1(MODE_LOWER, 0);
+            double bb1_main = BollingerBand_1(MODE_MAIN, 0);
+            double bb1_width = bb1_upper - bb1_lower;
+            double midPrice = iOpen(NULL,timeframe,0);
+            double midPricePrev = iOpen(NULL,timeframe,1);
+            double midPricePrevClose = iClose(NULL,timeframe,1);
+            bool closeUp = false;
+            bool closeDown = false;
+            
+            if (midPrice > bb1_main && midPrice < bb1_upper && bb1_upper - midPrice < bb1_width*0.25 && midPricePrev < bb1_upper)
+               closeUp = true;
+
+            if (midPrice < bb1_main && midPrice > bb1_lower && midPrice - bb1_lower < bb1_width*0.25 && midPricePrev > bb1_lower)
+               closeDown = true;
+
+            string bounceLabel = "";
+            if (closeUp && scorePrice < 0) {
+               bounceLabel = bounceLabel + "bounce down";
+
+               if (midPricePrev > midPrice && midPricePrev > midPricePrevClose)
+                  bounceLabel = bounceLabel +  " p+";
+
+               if (scoreStoch > 0)
+                  bounceLabel = bounceLabel +  " s+";
+
+               if (correlation > 0)
+                  bounceLabel = bounceLabel +  " c+";
+                  
+               col = Red;
+            }
+            else if (closeDown && scorePrice > 0) {
+               bounceLabel = bounceLabel +  "bounce up";
+
+               if (midPricePrev < midPrice && midPricePrev < midPricePrevClose)
+                  bounceLabel = bounceLabel +  " p+";
+
+               if (scoreStoch < 0)
+                  bounceLabel = bounceLabel +  " s+";
+
+               if (correlation < 0)
+                  bounceLabel = bounceLabel +  " c+";
+               
+               col = Green;
+
+            }
+            
+            updateLabel(stochGfx(labelIndex, 10), bounceLabel, col);
+
+            
+
             
             /*
             if (correlation > 0) col = Green; else col = Red;
@@ -651,7 +709,7 @@ string stochGfx(int i, int j) {
 void initLabels() {
    
    for (int i=0; i<3; i++) {
-      for (int j=0; j<10; j++) {   
+      for (int j=0; j<11; j++) {   
          int xDist = j * 80;
          int yDist = 15 * (i+1);
          
