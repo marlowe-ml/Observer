@@ -95,20 +95,23 @@ void StAn.assembleHistoryData(int barIndex) {
    
    if (barIndex < StAn.MAX_DATAPOINTS - 3) {
       double main = StAn.GetHV(barIndex,StAn.VB_MAIN);
-      double mainPrev = StAn.GetHV(barIndex+2,StAn.VB_MAIN);
+      double mainPrev = StAn.GetHV(barIndex+1,StAn.VB_MAIN);
       
       // did we cross into / out of extreme zone?   
-      if (main < StAn.EXTR_LOW && mainPrev > StAn.EXTR_LOW)
+      if (main < StAn.EXTR_LOW && mainPrev > StAn.EXTR_LOW){
          StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_DOWN, 1);
-            
-      else if (main > StAn.EXTR_LOW && mainPrev < StAn.EXTR_LOW)
+      }
+      else if (main > StAn.EXTR_LOW && mainPrev < StAn.EXTR_LOW) {
          StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_UP, 1);      
+      }
             
-      else if (main > StAn.EXTR_HIGH && mainPrev < StAn.EXTR_HIGH)      
+      else if (main > StAn.EXTR_HIGH && mainPrev < StAn.EXTR_HIGH) {
          StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_UP, 1);    
+      }
             
-      else if (main < StAn.EXTR_HIGH && mainPrev > StAn.EXTR_LOW)
+      else if (main < StAn.EXTR_HIGH && mainPrev > StAn.EXTR_HIGH){
          StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_DOWN, 1);
+      }
 
    }
 }

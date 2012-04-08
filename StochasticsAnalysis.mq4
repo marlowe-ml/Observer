@@ -12,7 +12,7 @@
 */
 #include <StochasticAnalysis.mqh>
 
-int waitNumTicks = 100;
+int waitNumTicks = 40;
 bool Redraw = false;
 
 
@@ -28,33 +28,48 @@ int deinit()
 
 int start()
   {
+      
+   StAn.UpdateResultsForTimePeriod(Period());   
+
+
+   
+   checkDraw();   
+  
+  
+   return(0);
+  }
+  
+ 
+ void checkDraw() {
+ 
    if (waitNumTicks > 0) {
       waitNumTicks--;
       Alert(waitNumTicks);
       if (waitNumTicks == 0)
          Redraw = true;
    }
-      
-   StAn.UpdateResultsForTimePeriod(Period());   
   
   
    if (Redraw == true) {
       // verify crossings
       for (int z=0; z<StAn.MAX_DATAPOINTS; z++) {
+         datetime barTime = iTime(NULL, StAn.TimePeriod, z);
          if (StAn.GetHV(z, StAn.VB_CROSS_EXHIGH_DOWN) > 0)
-         {
-            datetime barTime = iTime(NULL, StAn.TimePeriod, z);
+         {  
             Gfx.DrawVLine(barTime, Red);
          }
+         else if (StAn.GetHV(z, StAn.VB_CROSS_EXLOW_UP) > 0)
+         {  
+            Gfx.DrawVLine(barTime, Green);
+         }
+         
       }   
       Redraw = false;
    }
-   
-   
+ 
+ 
+ }
   
-  
-   return(0);
-  }
 //+------------------------------------------------------------------+
 
 
