@@ -30,6 +30,10 @@ int IndexOfTimePeriod(int timeperiod=0) {
    return(index);
 }
 
+
+
+
+
 /*
 bool IsNewBar(int timeperiod=0) {
    int tfIndex = IndexOfTimePeriod(timeperiod);
