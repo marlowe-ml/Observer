@@ -53,22 +53,44 @@ int start()
    if (Redraw == true) {
       // verify crossings
       for (int z=0; z<StAn.MAX_DATAPOINTS; z++) {
-         datetime barTime = iTime(NULL, StAn.TimePeriod, z);
-         if (StAn.GetHV(z, StAn.VB_CROSS_EXHIGH_DOWN) > 0)
-         {  
-            Gfx.DrawVLine(barTime, Red);
-         }
-         else if (StAn.GetHV(z, StAn.VB_CROSS_EXLOW_UP) > 0)
-         {  
-            Gfx.DrawVLine(barTime, Green);
-         }
-         
+         drawExtremeCrossing(z);
+         drawAvgCrossing(z);
       }   
       Redraw = false;
    }
  
  
  }
+ 
+ 
+void drawExtremeCrossing(int barIndex) {
+   datetime barTime = iTime(NULL, StAn.TimePeriod, barIndex);
+   
+   if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_DOWN) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Red);
+   }
+   else if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_EXLOW_UP) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Green);
+   }
+}
+ 
+void drawAvgCrossing(int barIndex) {
+   datetime barTime = iTime(NULL, StAn.TimePeriod, barIndex);
+
+   if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_AVG_DOWN) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Blue);
+   }
+
+   else if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_AVG_UP) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Purple);
+   } 
+}
+ 
+ 
   
 //+------------------------------------------------------------------+
 

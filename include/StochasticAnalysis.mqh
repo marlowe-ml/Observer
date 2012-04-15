@@ -19,7 +19,9 @@
 #define StAn.VB_CROSS_EXLOW_UP 5
 #define StAn.VB_CROSS_EXHIGH_DOWN 6
 #define StAn.VB_CROSS_EXHIGH_UP 7
-#define StAn.NUMVALUEBUCKETS 8
+#define StAn.VB_CROSS_AVG_DOWN 8
+#define StAn.VB_CROSS_AVG_UP 9
+#define StAn.NUMVALUEBUCKETS 10
 
 double StAn.EXTR_LOW = 25;
 double StAn.EXTR_HIGH = 75;
@@ -88,39 +90,50 @@ void StAn.assembleHistoryData(int barIndex) {
    StAn.StochasticHistory[tpIndex][barIndex][StAn.VB_SIGNAL] = StochasticValue(MODE_SIGNAL,StAn.TimePeriod, barIndex);
    StAn.StochasticHistory[tpIndex][barIndex][StAn.VB_PRICE] = iClose(NULL, StAn.TimePeriod, barIndex);
    
-   StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_DOWN, 0);
-   StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_UP, 0);
-   StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_DOWN, 0);
-   StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_UP, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXLOW_DOWN, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXLOW_UP, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_DOWN, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_UP, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_DOWN, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 0);
    
    if (barIndex < StAn.MAX_DATAPOINTS - 3) {
-      double main = StAn.GetHV(barIndex,StAn.VB_MAIN);
-      double mainPrev = StAn.GetHV(barIndex+1,StAn.VB_MAIN);
+      double main = StAn.GetHistVal(barIndex,StAn.VB_MAIN);
+      double mainPrev = StAn.GetHistVal(barIndex+1,StAn.VB_MAIN);
+      double signal = StAn.GetHistVal(barIndex,StAn.VB_SIGNAL);
+      double signalPrev = StAn.GetHistVal(barIndex+1,StAn.VB_SIGNAL);
       
       // did we cross into / out of extreme zone?   
       if (main < StAn.EXTR_LOW && mainPrev > StAn.EXTR_LOW){
-         StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_DOWN, 1);
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXLOW_DOWN, 1);
       }
       else if (main > StAn.EXTR_LOW && mainPrev < StAn.EXTR_LOW) {
-         StAn.SetHV(barIndex, StAn.VB_CROSS_EXLOW_UP, 1);      
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXLOW_UP, 1);      
       }
             
       else if (main > StAn.EXTR_HIGH && mainPrev < StAn.EXTR_HIGH) {
-         StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_UP, 1);    
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_UP, 1);    
       }
             
       else if (main < StAn.EXTR_HIGH && mainPrev > StAn.EXTR_HIGH){
-         StAn.SetHV(barIndex, StAn.VB_CROSS_EXHIGH_DOWN, 1);
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_DOWN, 1);
       }
+      
+      // did avg cross main?
+      if (signal < main && signalPrev >= mainPrev)
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_DOWN, 1);
+
+      else if (signal > main && signalPrev <= mainPrev)
+         StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 1);
 
    }
 }
 
 
-double StAn.GetHV(int barIndex, int valueBucket) {
+double StAn.GetHistVal(int barIndex, int valueBucket) {
    return(StAn.StochasticHistory[StAn.IndexOfTimePeriod][barIndex][valueBucket]);
 }
 
-void StAn.SetHV(int barIndex, int valueBucket, double val) {
+void StAn.SetHistVal(int barIndex, int valueBucket, double val) {
    StAn.StochasticHistory[StAn.IndexOfTimePeriod][barIndex][valueBucket] = val;
 }
