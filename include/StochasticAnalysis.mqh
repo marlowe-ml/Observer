@@ -21,7 +21,9 @@
 #define StAn.VB_CROSS_EXHIGH_UP 7
 #define StAn.VB_CROSS_AVG_DOWN 8
 #define StAn.VB_CROSS_AVG_UP 9
-#define StAn.NUMVALUEBUCKETS 10
+#define StAn.VB_TURN_DOWN 10
+#define StAn.VB_TURN_UP 11
+#define StAn.NUMVALUEBUCKETS 12
 
 double StAn.EXTR_LOW = 25;
 double StAn.EXTR_HIGH = 75;
@@ -96,6 +98,8 @@ void StAn.assembleHistoryData(int barIndex) {
    StAn.SetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_UP, 0);
    StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_DOWN, 0);
    StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_TURN_UP, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_TURN_DOWN, 0);
    
    if (barIndex < StAn.MAX_DATAPOINTS - 3) {
       double main = StAn.GetHistVal(barIndex,StAn.VB_MAIN);
@@ -126,6 +130,18 @@ void StAn.assembleHistoryData(int barIndex) {
       else if (signal > main && signalPrev <= mainPrev)
          StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 1);
 
+      if (barIndex > 1) {         
+         double mainPrev2 = StAn.GetHistVal(barIndex+2,StAn.VB_MAIN);
+         // is this a turning point (top / bottom)
+         if (mainPrev2 > mainPrev && main > mainPrev) {
+            StAn.SetHistVal(barIndex+1, StAn.VB_TURN_UP, 1);
+         }  else if (mainPrev2 < mainPrev && main < mainPrev) {
+            StAn.SetHistVal(barIndex+1, StAn.VB_TURN_DOWN, 1);
+         }
+         
+      }
+         
+         
    }
 }
 

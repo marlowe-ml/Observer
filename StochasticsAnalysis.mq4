@@ -53,8 +53,10 @@ int start()
    if (Redraw == true) {
       // verify crossings
       for (int z=0; z<StAn.MAX_DATAPOINTS; z++) {
-         drawExtremeCrossing(z);
-         drawAvgCrossing(z);
+         datetime barTime = iTime(NULL, StAn.TimePeriod, z);
+         //drawExtremeCrossing(z, barTime);
+         //drawAvgCrossing(z, barTime);
+         drawTopsAndBottoms(z, barTime);
       }   
       Redraw = false;
    }
@@ -63,9 +65,7 @@ int start()
  }
  
  
-void drawExtremeCrossing(int barIndex) {
-   datetime barTime = iTime(NULL, StAn.TimePeriod, barIndex);
-   
+void drawExtremeCrossing(int barIndex, datetime barTime) {
    if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_EXHIGH_DOWN) > 0)
    {  
       Gfx.DrawVLine(barTime, Red);
@@ -76,9 +76,7 @@ void drawExtremeCrossing(int barIndex) {
    }
 }
  
-void drawAvgCrossing(int barIndex) {
-   datetime barTime = iTime(NULL, StAn.TimePeriod, barIndex);
-
+void drawAvgCrossing(int barIndex, datetime barTime) {
    if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_AVG_DOWN) > 0)
    {  
       Gfx.DrawVLine(barTime, Blue);
@@ -87,8 +85,21 @@ void drawAvgCrossing(int barIndex) {
    else if (StAn.GetHistVal(barIndex, StAn.VB_CROSS_AVG_UP) > 0)
    {  
       Gfx.DrawVLine(barTime, Purple);
-   } 
+   }
 }
+
+void drawTopsAndBottoms(int barIndex, datetime barTime) {
+   if (StAn.GetHistVal(barIndex, StAn.VB_TURN_DOWN) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Red);
+   }
+
+   else if (StAn.GetHistVal(barIndex, StAn.VB_TURN_UP) > 0)
+   {  
+      Gfx.DrawVLine(barTime, Green);
+   }
+}
+
  
  
   
