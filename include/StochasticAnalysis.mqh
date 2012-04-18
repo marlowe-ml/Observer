@@ -23,7 +23,11 @@
 #define StAn.VB_CROSS_AVG_UP 9
 #define StAn.VB_TURN_DOWN 10
 #define StAn.VB_TURN_UP 11
-#define StAn.NUMVALUEBUCKETS 12
+#define StAn.VB_NUM_LOWER_PREV 12
+#define StAn.VB_NUM_LOWER_NEXT 13
+#define StAn.VB_NUM_HIGHER_PREV 14
+#define StAn.VB_NUM_HIGHER_NEXT 15
+#define StAn.NUMVALUEBUCKETS 16
 
 double StAn.EXTR_LOW = 25;
 double StAn.EXTR_HIGH = 75;
@@ -52,7 +56,48 @@ void StAn.update() {
 
    // in either case update values for current tick
    StAn.assembleHistoryData(0);
-        
+}
+
+
+void StAn.adjustHistoryTopsBottoms(int startBar) {
+   
+   if (startBar == StAn.MAX_DATAPOINTS-1)
+      return;
+
+   int barsBack = 1;
+   
+   int lowerNext = 0;
+   int lowerPrev = 0;   
+   int higherNext = 0;
+   int higherPrev = 0;   
+   
+   double main = StAn.GetHistVal(startBar,StAn.VB_MAIN);   
+   double mainPrev = StAn.GetHistVal(startBar+barsBack,StAn.VB_MAIN);
+
+   bool lookingForHigher = mainPrev > main;
+   
+   while (startBar + barsBack < StAn.MAX_DATAPOINTS) {
+      if (lookingForHigher && mainPrev > main) {
+         lowerNext++;
+         higherPrev++;
+         StAn.SetHistVal(startBar + barsBack, StAn.VB_NUM_LOWER_NEXT, lowerNext);
+      }
+      else if (!lookingForHigher && mainPrev <= main) {  
+         higherNext++;
+         lowerPrev++;
+         StAn.SetHistVal(startBar + barsBack, StAn.VB_NUM_HIGHER_NEXT, higherNext);      
+         
+      } else {
+         break;
+      }
+      
+      barsBack++;
+      mainPrev = StAn.GetHistVal(startBar+barsBack,StAn.VB_MAIN);
+   }
+   
+   StAn.SetHistVal(startBar, StAn.VB_NUM_LOWER_PREV, lowerPrev);   
+   StAn.SetHistVal(startBar, StAn.VB_NUM_HIGHER_PREV, higherPrev);   
+
 }
 
 void StAn.checkInitHistory() {
@@ -63,7 +108,8 @@ void StAn.checkInitHistory() {
       for (int i=StAn.MAX_DATAPOINTS-1; i>=0; i--) {
          StAn.assembleHistoryData(i);
       }
-      StAn.InitializedHistory[tpIndex] = true;     
+      StAn.InitializedHistory[tpIndex] = true;
+      
    }
       
 }
@@ -100,6 +146,10 @@ void StAn.assembleHistoryData(int barIndex) {
    StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 0);
    StAn.SetHistVal(barIndex, StAn.VB_TURN_UP, 0);
    StAn.SetHistVal(barIndex, StAn.VB_TURN_DOWN, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_NUM_LOWER_PREV, 0);   
+   StAn.SetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT, 0);      
+   StAn.SetHistVal(barIndex, StAn.VB_NUM_HIGHER_PREV, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT, 0);
    
    if (barIndex < StAn.MAX_DATAPOINTS - 3) {
       double main = StAn.GetHistVal(barIndex,StAn.VB_MAIN);
@@ -140,9 +190,9 @@ void StAn.assembleHistoryData(int barIndex) {
          }
          
       }
-         
-         
    }
+   
+   StAn.adjustHistoryTopsBottoms(barIndex);
 }
 
 
