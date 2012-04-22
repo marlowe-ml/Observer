@@ -101,11 +101,30 @@ void drawTurningPoints(int barIndex, datetime barTime) {
 }
 
 void drawTopsAndBottoms(int barIndex, datetime barTime) {
+
+   /*if (StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT) > 0 )
+   {  
+      Gfx.DrawVLine(barTime, Red);
+   }
+   else if (StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 )
+   {  
+      Gfx.DrawVLine(barTime, Green);
+   }*/
+   
+   /*
+   if (StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT) > 0 && StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 )
+   {  
+      Gfx.DrawVLine(barTime, Red);
+   }
+   else if (StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 && false)
+   {  
+      Gfx.DrawVLine(barTime, Green);
+   }*/   
+   
    if (StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_PREV) == 0 && StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT) == 0)
    {  
       Gfx.DrawVLine(barTime, Red);
    }
-
    else if (StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_PREV) == 0 && StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) == 0)
    {  
       Gfx.DrawVLine(barTime, Green);
