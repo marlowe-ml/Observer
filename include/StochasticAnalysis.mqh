@@ -23,11 +23,15 @@
 #define StAn.VB_CROSS_AVG_UP 9
 #define StAn.VB_TURN_DOWN 10
 #define StAn.VB_TURN_UP 11
-#define StAn.VB_NUM_LOWER_PREV 12
-#define StAn.VB_NUM_LOWER_NEXT 13
-#define StAn.VB_NUM_HIGHER_PREV 14
-#define StAn.VB_NUM_HIGHER_NEXT 15
-#define StAn.NUMVALUEBUCKETS 16
+#define StAn.VB_LOWER_PREV_REL 12
+#define StAn.VB_LOWER_NEXT_REL 13
+#define StAn.VB_HIGHER_PREV_REL 14
+#define StAn.VB_HIGHER_NEXT_REL 15
+#define StAn.VB_LOWER_PREV_ABS 16
+#define StAn.VB_LOWER_NEXT_ABS 17
+#define StAn.VB_HIGHER_PREV_ABS 18
+#define StAn.VB_HIGHER_NEXT_ABS 19
+#define StAn.NUMVALUEBUCKETS 20
 
 double StAn.EXTR_LOW = 25;
 double StAn.EXTR_HIGH = 75;
@@ -70,28 +74,52 @@ void StAn.adjustHistoryTopsBottoms(int startBar) {
    int lowerPrev = 0;   
    int higherNext = 0;
    int higherPrev = 0;   
+   int lowerNextAbs = 0;
+   int lowerPrevAbs = 0;   
+   int higherNextAbs = 0;
+   int higherPrevAbs = 0;   
    
    double main = StAn.GetHistVal(startBar,StAn.VB_MAIN);   
+   double mainAbs = main;
    double mainPrev = StAn.GetHistVal(startBar+barsBack,StAn.VB_MAIN);
    bool lookingForHigher = mainPrev > main;   
    
    int count = 0;
-   bool doContinue = true;
+   bool continueRelative = true;
+   bool continueAbsolute = true;
    
-   while (doContinue && startBar + barsBack < StAn.MAX_DATAPOINTS) {
+   while ((continueRelative || continueRelative) && startBar + barsBack < StAn.MAX_DATAPOINTS) {
       
-      if (lookingForHigher && mainPrev > main) {
-         lowerNext++;
-         higherPrev++;
-         StAn.SetHistVal(startBar + barsBack, StAn.VB_NUM_LOWER_NEXT, lowerNext);
+      if (continueRelative) {
+         if (lookingForHigher && mainPrev > main) {
+            lowerNext++;
+            higherPrev++;
+            StAn.SetHistVal(startBar + barsBack, StAn.VB_LOWER_NEXT_REL, lowerNext);
+         }
+         else if (lookingForHigher == false && mainPrev <= main) {  
+            higherNext++;
+            lowerPrev++;
+            StAn.SetHistVal(startBar + barsBack, StAn.VB_HIGHER_NEXT_REL, higherNext);      
+         } else {
+            continueRelative = false;
+         }
       }
-      else if (lookingForHigher == false && mainPrev <= main) {  
-         higherNext++;
-         lowerPrev++;
-         StAn.SetHistVal(startBar + barsBack, StAn.VB_NUM_HIGHER_NEXT, higherNext);      
-      } else {
-         doContinue = false;
+
+      if (continueAbsolute) {
+         if (lookingForHigher && mainPrev > mainAbs) {
+            lowerNextAbs++;
+            higherPrevAbs++;
+            StAn.SetHistVal(startBar + barsBack, StAn.VB_LOWER_NEXT_ABS, lowerNextAbs);
+         }
+         else if (lookingForHigher == false && mainPrev <= mainAbs) {  
+            higherNextAbs++;
+            lowerPrevAbs++;
+            StAn.SetHistVal(startBar + barsBack, StAn.VB_HIGHER_NEXT_ABS, higherNextAbs);
+         } else {
+            continueAbsolute = false;
+         }
       }
+
       
       barsBack = barsBack + 1;
       main = mainPrev;
@@ -101,8 +129,11 @@ void StAn.adjustHistoryTopsBottoms(int startBar) {
       
    }
    
-   StAn.SetHistVal(startBar, StAn.VB_NUM_LOWER_PREV, lowerPrev);   
-   StAn.SetHistVal(startBar, StAn.VB_NUM_HIGHER_PREV, higherPrev);   
+   StAn.SetHistVal(startBar, StAn.VB_LOWER_PREV_REL, lowerPrev);   
+   StAn.SetHistVal(startBar, StAn.VB_HIGHER_PREV_REL, higherPrev);   
+
+   StAn.SetHistVal(startBar, StAn.VB_LOWER_PREV_ABS, lowerPrevAbs);   
+   StAn.SetHistVal(startBar, StAn.VB_HIGHER_PREV_ABS, higherPrevAbs);   
 
 }
 
@@ -153,10 +184,10 @@ void StAn.assembleHistoryData(int barIndex) {
    StAn.SetHistVal(barIndex, StAn.VB_CROSS_AVG_UP, 0);
    StAn.SetHistVal(barIndex, StAn.VB_TURN_UP, 0);
    StAn.SetHistVal(barIndex, StAn.VB_TURN_DOWN, 0);
-   StAn.SetHistVal(barIndex, StAn.VB_NUM_LOWER_PREV, 0);   
-   StAn.SetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT, 0);      
-   StAn.SetHistVal(barIndex, StAn.VB_NUM_HIGHER_PREV, 0);
-   StAn.SetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_LOWER_PREV_REL, 0);   
+   StAn.SetHistVal(barIndex, StAn.VB_LOWER_NEXT_REL, 0);      
+   StAn.SetHistVal(barIndex, StAn.VB_HIGHER_PREV_REL, 0);
+   StAn.SetHistVal(barIndex, StAn.VB_HIGHER_NEXT_REL, 0);
    
    if (barIndex < StAn.MAX_DATAPOINTS - 3) {
       double main = StAn.GetHistVal(barIndex,StAn.VB_MAIN);
