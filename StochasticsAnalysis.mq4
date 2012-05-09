@@ -57,7 +57,8 @@ int start()
          //drawExtremeCrossing(z, barTime);
          //drawAvgCrossing(z, barTime);
          drawTopsAndBottoms(z, barTime);
-      }   
+      }
+      drawPreviousTopBottom();
       Redraw = false;
    }
  
@@ -101,45 +102,24 @@ void drawTurningPoints(int barIndex, datetime barTime) {
 }
 
 void drawTopsAndBottoms(int barIndex, datetime barTime) {
+   if (StAn.GetHistVal(barIndex, StAn.VB_LOWER_PREV_ABS) > 2 && StAn.GetHistVal(barIndex, StAn.VB_LOWER_NEXT_ABS) > 2
+      && StAn.GetHistVal(barIndex, StAn.VB_LOWER_PREV_REL) > 0 && StAn.GetHistVal(barIndex, StAn.VB_LOWER_NEXT_REL) > 0
+   )
+   {  
+      Gfx.DrawVLine(barTime, Red);
+   }
+   else if (StAn.GetHistVal(barIndex, StAn.VB_HIGHER_PREV_ABS) > 2 && StAn.GetHistVal(barIndex, StAn.VB_HIGHER_NEXT_ABS) > 2
+      && StAn.GetHistVal(barIndex, StAn.VB_HIGHER_PREV_REL) > 0 && StAn.GetHistVal(barIndex, StAn.VB_HIGHER_NEXT_REL) > 0
+   )
+   {  
+      Gfx.DrawVLine(barTime, Green);
+   }
+}
 
-   /*if (StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT) > 0 )
-   {  
-      Gfx.DrawVLine(barTime, Red);
-   }
-   else if (StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 )
-   {  
-      Gfx.DrawVLine(barTime, Green);
-   }*/
-   
-   /*
-   if (StAn.GetHistVal(barIndex, StAn.VB_NUM_LOWER_NEXT) > 0 && StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 )
-   {  
-      Gfx.DrawVLine(barTime, Red);
-   }
-   else if (StAn.GetHistVal(barIndex, StAn.VB_NUM_HIGHER_NEXT) > 0 && false)
-   {  
-      Gfx.DrawVLine(barTime, Green);
-   }*/   
-   /*
-   if (StAn.GetHistVal(barIndex, StAn.VB_LOWER_PREV_REL) > 0 && StAn.GetHistVal(barIndex, StAn.VB_LOWER_NEXT_REL) > 0)
-   {  
-      Gfx.DrawVLine(barTime, Red);
-   }
-   else if (StAn.GetHistVal(barIndex, StAn.VB_HIGHER_PREV_REL) > 0 && StAn.GetHistVal(barIndex, StAn.VB_HIGHER_NEXT_REL) > 0)
-   {  
-      Gfx.DrawVLine(barTime, Green);
-   }*/
-   
-   if (StAn.GetHistVal(barIndex, StAn.VB_LOWER_PREV_ABS) > 2 && StAn.GetHistVal(barIndex, StAn.VB_LOWER_NEXT_ABS) > 2)
-   {  
-      Gfx.DrawVLine(barTime, Red);
-   }
-   else if (StAn.GetHistVal(barIndex, StAn.VB_HIGHER_PREV_ABS) > 2 && StAn.GetHistVal(barIndex, StAn.VB_HIGHER_NEXT_ABS) > 2)
-   {  
-      Gfx.DrawVLine(barTime, Green);
-   }
-   
-   
+void drawPreviousTopBottom() {
+   int prevBar = StAn.PrevTopBottom(0);
+   double barTime = iTime(NULL, StAn.TimePeriod, prevBar);
+   Gfx.DrawVLine(barTime, Blue);
 }
  
  
